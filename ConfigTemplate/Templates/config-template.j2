@@ -1,0 +1,69 @@
+# Generic Cisco IOS Configuration Template
+# v 1.0 Toivo Voll
+# v 1.1 Toivo Voll added DNS
+# 
+# The purpose of this template is to contain the configuration commands 
+#  for a particular switch type. Anything that is common between all switches,
+#  such as NTP server IPs etc. should be a variable here, obtained
+#  from a separate variable file.
+#
+# The goal is that when new switch types are added, only a template needs to be made.
+#  When log servers or NTP servers change, only the variable file needs to be changed,
+#  not these template files.
+# 
+# Configure host name and DNS domain. This should be done before key generation. 
+#
+hostname {{ confvars['hostname'] }}
+
+# Services
+no service pad
+no service tcp-small-servers
+no service udp-small-servers
+no ip bootp server
+no ip finger
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+
+# Enable secret -- do not use enable password, will not pass audit
+enable secret {{ confvars['enable_secret'] }}
+
+# Local User of Last Resort
+username {{ confvars['local_user'] }} privilege 15 secret {{ confvars['local_password'] }}
+
+# AAA configuration
+aaa new-model
+aaa session-id common
+
+#vlan config
+{% for vlan in confvars['vlans'] -%}
+vlan {{ vlan['id'] }}
+	name {{ vlan['name'] }}
+	description {{ vlan['description'] }}
+{% endfor %}
+
+# Management interface configuration. The interface will vary depending on
+#  switch model, and is set in the variable file.
+interface {{ confvars['mgmt_interface'] }}
+description Network Management
+ip address {{ confvars['ip'] }} {{ confvars['mask'] }}
+exit
+
+ip default gateway {{ confvars['gateway'] }}
+
+# NTP configuration
+{% for ntp in confvars['ntp'] -%}
+	ntp server {{ ntp['server'] }}
+{% endfor %}
+
+#snmp config
+snmp-server community {{ confvars['snmp']['read'] }} RO
+snmp-server community {{ confvars['snmp']['write'] }} RW
+snmp-server ifindex persist
+snmp-server location {{ confvars['snmp']['syslocation'] }}
+snmp-server contact {{ confvars['snmp']['syscontact'] }}
+{% for trap in confvars['snmp']['trap'] -%}
+snmp-server host {{ trap['target'] }}  public
+{% endfor %}

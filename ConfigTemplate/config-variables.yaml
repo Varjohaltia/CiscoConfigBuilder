@@ -1,0 +1,32 @@
+# Host name. DNS name is set in the template.
+hostname: testswitch
+
+ip: 10.101.0.221
+mask: 255.255.255.0
+gateway: 10.1.1.1
+mgmt_interface: vlan 10
+
+vlans:
+- {description: management vlan, id: '10', name: management}
+- {description: users vlan, id: '15', name: users}
+- {description: phones vlan, id: '16', name: phones}
+- {description: servers vlan, id: '20', name: servers vlan }
+
+enable_secret: supersecretenable
+local_user: local-admin
+local_password: supersecretlocal
+
+snmp:
+        read: supersecret
+        write: macdonald
+        syscontact: admin.lab.local
+        syslocation: lab
+        trap:
+        - {target: 10.101.0.200}
+        - {target: 10.101.0.201}
+        - {target: 10.101.0.202}
+
+ntp:
+        - {server: 10.101.0.200}
+        - {server: 10.101.0.201}
+
